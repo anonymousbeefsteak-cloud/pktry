@@ -12,7 +12,28 @@
         body {
             font-family: 'Noto Sans TC', sans-serif;
             -webkit-tap-highlight-color: transparent;
+            
+            /* Anti-Copy / App-like Feel: Strict Lock Down */
+            -webkit-user-select: none; /* Safari */
+            -moz-user-select: none;    /* Firefox */
+            -ms-user-select: none;     /* IE10+/Edge */
+            user-select: none;         /* Standard */
+            -webkit-touch-callout: none; /* iOS Safari: disable callout menu */
         }
+        
+        /* Re-enable text selection for inputs only */
+        input, textarea {
+            -webkit-user-select: text;
+            user-select: text;
+        }
+
+        /* Prevent image interaction */
+        img {
+            -webkit-user-drag: none;
+            user-drag: none;
+            pointer-events: none; /* Prevent right click or save on images specifically */
+        }
+
         .text-xxs {
             font-size: 0.65rem;
             line-height: 0.85rem;

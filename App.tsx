@@ -313,14 +313,51 @@ const App = () => {
     const printContainerRef = useRef<HTMLElement | null>(null);
     const t = TRANSLATIONS[language];
 
+    // --- ANTI-COPY PROTECTION ---
+    useEffect(() => {
+        // 1. Disable Context Menu (Right Click)
+        const handleContextMenu = (e: MouseEvent) => {
+            e.preventDefault();
+        };
+
+        // 2. Disable Keyboard Shortcuts
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Block F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U (View Source)
+            if (
+                e.key === 'F12' ||
+                (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) ||
+                (e.ctrlKey && e.key === 'U') ||
+                // Block Ctrl+S (Save), Ctrl+P (Print)
+                (e.ctrlKey && e.key === 's') ||
+                (e.ctrlKey && e.key === 'p')
+            ) {
+                e.preventDefault();
+            }
+        };
+
+        // 3. Disable Dragging
+        const handleDragStart = (e: DragEvent) => {
+            e.preventDefault();
+        };
+
+        document.addEventListener('contextmenu', handleContextMenu);
+        document.addEventListener('keydown', handleKeyDown);
+        document.addEventListener('dragstart', handleDragStart);
+
+        return () => {
+            document.removeEventListener('contextmenu', handleContextMenu);
+            document.removeEventListener('keydown', handleKeyDown);
+            document.removeEventListener('dragstart', handleDragStart);
+        };
+    }, []);
+
     useEffect(() => {
         printContainerRef.current = document.getElementById('print-container');
         
-        // When the app loads or admin mode changes, verify if we need to clear data
-        // Ideally, we only keep cart if we are NOT on the welcome screen.
-        // However, for reload safety, we usually keep it.
-        // BUT, per user request: "Data... not exist in temporary storage". 
-        // We will clear localStorage whenever the Welcome screen is active.
+        // STRICT PRIVACY: Ensure legacy/temp 'recent orders' are wiped on every load.
+        localStorage.removeItem('steakhouse-recent-orders');
+        
+        // If Welcome Screen is showing (New Session), clear the cart completely.
         if (showWelcome) {
             localStorage.removeItem('steakhouse_cart');
             setCartItems([]);
