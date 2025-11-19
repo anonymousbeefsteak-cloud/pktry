@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>Redirecting...</title>
+</head>
+<body style="font-family: sans-serif; text-align: center; padding: 50px;">
+    <h1>請使用主程式進入後台</h1>
+    <p>請開啟 <strong>index.html</strong>，然後雙擊標題「無名牛排」並輸入密碼進入管理後台。</p>
+    <p>Please open <strong>index.html</strong> instead.</p>
+    <script>
+        // Attempt to redirect to root, but show message if on file:// protocol
+        if (!window.location.protocol.startsWith('file')) {
+            window.location.href = '/';
+        }
+    </script>
+</body>
+</html>
