@@ -133,6 +133,7 @@ const WelcomeModal = ({ onAgree, t }: { onAgree: () => void; t: any }) => {
             type: 'intro',
             title: "今日菜單懶人包",
             subtitle: "點餐模擬頁面",
+            image: "https://anonymousbeefsteak-cloud.github.io/pktry/5.jpg",
             bgColor: "bg-slate-900",
             textColor: "text-white"
         },
@@ -189,19 +190,24 @@ const WelcomeModal = ({ onAgree, t }: { onAgree: () => void; t: any }) => {
                         style={{ transform: `translateX(-${currentSlide * 100}%)` }}
                     >
                         {slides.map((slide, index) => (
-                            <div key={index} className={`w-full h-full flex-shrink-0 flex flex-col justify-center items-center p-8 text-center ${slide.bgColor} ${slide.textColor}`}>
+                            <div key={index} className={`w-full h-full flex-shrink-0 flex flex-col justify-center items-center p-0 text-center relative ${slide.bgColor} ${slide.textColor}`}>
                                 {slide.type === 'intro' && (
-                                    <>
-                                        <div className="mb-6 p-4 rounded-full bg-white/10 backdrop-blur-sm">
-                                            <svg className="w-20 h-20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m-6 4a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" /></svg>
+                                    <div className="relative w-full h-full">
+                                        <img 
+                                            src={slide.image} 
+                                            alt="Today's Menu Lazy Package" 
+                                            className="w-full h-full object-cover"
+                                        />
+                                        <div className="absolute inset-0 bg-black bg-opacity-30 flex flex-col justify-center items-center p-8">
+                                             {/* Overlay text for accessibility or design emphasis, though image has text */}
+                                             <h2 className="text-3xl font-extrabold mb-2 tracking-tight text-white drop-shadow-md">{slide.title}</h2>
+                                             <p className="text-lg text-white drop-shadow-md opacity-90">{slide.subtitle}</p>
+                                             <p className="mt-auto mb-4 text-sm text-white opacity-80 bg-black/50 px-3 py-1 rounded-full">點擊右下角 Next 開始模擬</p>
                                         </div>
-                                        <h2 className="text-4xl font-extrabold mb-4 tracking-tight">{slide.title}</h2>
-                                        <p className="text-xl opacity-80">{slide.subtitle}</p>
-                                        <p className="mt-8 text-sm opacity-60">點擊下方按鈕或滑動查看更多</p>
-                                    </>
+                                    </div>
                                 )}
                                 {slide.type === 'feature' && (
-                                    <>
+                                    <div className="p-8 w-full h-full flex flex-col justify-center items-center">
                                         <h2 className="text-3xl font-bold mb-8">{slide.title}</h2>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
                                             {slide.items?.map((item, idx) => (
@@ -211,10 +217,10 @@ const WelcomeModal = ({ onAgree, t }: { onAgree: () => void; t: any }) => {
                                                 </div>
                                             ))}
                                         </div>
-                                    </>
+                                    </div>
                                 )}
                                 {slide.type === 'guide' && (
-                                    <>
+                                    <div className="p-8 w-full h-full flex flex-col justify-center items-center">
                                         <h2 className="text-3xl font-bold mb-8">{slide.title}</h2>
                                         <div className="space-y-4 text-left w-full max-w-md">
                                             {slide.steps?.map((step, idx) => (
@@ -224,10 +230,10 @@ const WelcomeModal = ({ onAgree, t }: { onAgree: () => void; t: any }) => {
                                                 </div>
                                             ))}
                                         </div>
-                                    </>
+                                    </div>
                                 )}
                                 {slide.type === 'rules' && (
-                                    <>
+                                    <div className="p-8 w-full h-full flex flex-col justify-center items-center">
                                         <h2 className="text-3xl font-bold mb-6 text-slate-800 border-b-4 border-green-500 pb-2">{slide.title}</h2>
                                         <div className="text-slate-600 space-y-4 text-left text-lg mb-8 bg-slate-50 p-6 rounded-xl w-full">
                                             {slide.content?.map((line: string, idx: number) => (
@@ -240,7 +246,7 @@ const WelcomeModal = ({ onAgree, t }: { onAgree: () => void; t: any }) => {
                                         <button onClick={onAgree} className="w-full bg-green-600 text-white font-bold py-4 px-8 rounded-xl hover:bg-green-700 transition-all shadow-lg transform hover:scale-105 text-xl">
                                             {t.welcomeAgree}
                                         </button>
-                                    </>
+                                    </div>
                                 )}
                             </div>
                         ))}
@@ -248,7 +254,7 @@ const WelcomeModal = ({ onAgree, t }: { onAgree: () => void; t: any }) => {
                 </div>
 
                 {/* Controls */}
-                <div className="h-16 bg-white border-t flex items-center justify-between px-6">
+                <div className="h-16 bg-white border-t flex items-center justify-between px-6 z-10">
                     <div className="flex gap-2">
                         {slides.map((_, idx) => (
                             <button 
