@@ -295,6 +295,34 @@ const GuestCountModal = ({ onConfirm, t }: { onConfirm: (count: number) => void;
     );
 };
 
+const ThankYouModal = ({ onConfirm }: { onConfirm: () => void }) => {
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-80 z-[60] flex justify-center items-center p-4">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 text-center transform transition-all scale-100 animate-bounce-in">
+                <div className="mb-6 flex justify-center">
+                    <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center">
+                        <svg className="w-12 h-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                    </div>
+                </div>
+                <h2 className="text-2xl font-bold text-slate-800 mb-2">感謝您的試用</h2>
+                <h3 className="text-lg font-medium text-slate-500 mb-6">Thank you for trying</h3>
+                <p className="text-slate-600 mb-8">
+                    模擬點餐程序已完成。<br/>
+                    請點擊下方按鈕重新載入頁面。
+                </p>
+                <button 
+                    onClick={onConfirm}
+                    className="w-full bg-slate-800 text-white font-bold py-3 px-6 rounded-xl hover:bg-slate-900 transition-colors shadow-md"
+                >
+                    重新載入 (Reload)
+                </button>
+            </div>
+        </div>
+    );
+};
+
 // --- Main App Component ---
 
 const App = () => {
@@ -310,6 +338,7 @@ const App = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showWelcome, setShowWelcome] = useState(true);
     const [showGuestCountModal, setShowGuestCountModal] = useState(false);
+    const [showThankYou, setShowThankYou] = useState(false);
     const [guestCount, setGuestCount] = useState(1);
     const [isQuietHours, setIsQuietHours] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
@@ -511,6 +540,12 @@ const App = () => {
     };
     
     const handleGuestCountConfirm = (count: number) => { setGuestCount(count); setShowGuestCountModal(false); };
+    
+    const handleThankYouConfirm = () => {
+        setShowThankYou(false);
+        // Hard reload as requested to ensure complete privacy/reset
+        window.location.reload();
+    };
 
     const handleSubmitAndPrint = async (orderData: Partial<Order>) => {
         if (isSubmitting) return; setIsSubmitting(true);
@@ -547,9 +582,9 @@ const App = () => {
               setCartItems([]); 
               localStorage.removeItem('steakhouse_cart'); // Explicit delete
               setIsCartOpen(false); 
-              setShowWelcome(true); // Go back to carousel
-              setGuestCount(1); 
               setIsSubmitting(false); 
+              // Show Thank You Modal instead of immediate reset
+              setShowThankYou(true);
               window.removeEventListener('afterprint', handleAfterPrint); 
           };
           window.addEventListener('afterprint', handleAfterPrint);
@@ -563,6 +598,7 @@ const App = () => {
     if (isAdminOpen) return <AdminPanel onBack={() => setIsAdminOpen(false)} />;
     if (showWelcome) return <WelcomeModal onAgree={handleWelcomeAgree} t={t} />;
     if (showGuestCountModal) return <GuestCountModal onConfirm={handleGuestCountConfirm} t={t} />;
+    if (showThankYou) return <ThankYouModal onConfirm={handleThankYouConfirm} />;
 
     return (
         <div className="flex min-h-screen">
