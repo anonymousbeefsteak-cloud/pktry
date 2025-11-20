@@ -250,26 +250,23 @@ const App = () => {
     const printContainerRef = useRef<HTMLElement | null>(null);
     const t = TRANSLATIONS[language];
 
-    // --- ANTI-COPY PROTECTION ---
+    // --- ANTI-COPY & KIOSK PROTECTION ---
     useEffect(() => {
         // 1. Disable Context Menu (Right Click)
         const handleContextMenu = (e: MouseEvent) => {
             e.preventDefault();
         };
 
-        // 2. Disable Keyboard Shortcuts
+        // 2. Disable Keyboard Shortcuts (Comprehensive)
         const handleKeyDown = (e: KeyboardEvent) => {
-            // Block F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U (View Source)
-            if (
-                e.key === 'F12' ||
-                (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) ||
-                (e.ctrlKey && e.key === 'U') ||
-                // Block Ctrl+S (Save), Ctrl+P (Print)
-                (e.ctrlKey && e.key === 's') ||
-                (e.ctrlKey && e.key === 'p')
-            ) {
-                e.preventDefault();
+            const target = e.target as HTMLElement;
+            // Allow typing in Inputs and Textareas
+            if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
+                return;
             }
+            // Block EVERYTHING else for "Kiosk" feel
+            e.preventDefault();
+            e.stopPropagation();
         };
 
         // 3. Disable Dragging
@@ -438,7 +435,23 @@ const App = () => {
         localStorage.removeItem('steakhouse_cart');
         setCartItems([]);
         setShowWelcome(false); 
-        setShowGuestCountModal(true); 
+        setShowGuestCountModal(true);
+        
+        // TRIGGER FULL SCREEN
+        const docEl = document.documentElement;
+        if (docEl.requestFullscreen) {
+            docEl.requestFullscreen().catch(err => console.log("Fullscreen denied:", err));
+        } else if ((docEl as any).webkitRequestFullscreen) {
+            (docEl as any).webkitRequestFullscreen();
+        }
+    };
+
+    const handleExitFullScreen = () => {
+        if (document.exitFullscreen) {
+            document.exitFullscreen().catch(err => console.log(err));
+        } else if ((document as any).webkitExitFullscreen) {
+            (document as any).webkitExitFullscreen();
+        }
     };
     
     const handleGuestCountConfirm = (count: number) => { setGuestCount(count); setShowGuestCountModal(false); };
@@ -490,7 +503,16 @@ const App = () => {
     if (showThankYou) return <ThankYouModal onConfirm={handleThankYouConfirm} />;
 
     return (
-        <div className="flex min-h-screen">
+        <div className="flex min-h-screen relative">
+            {/* EXIT FULL SCREEN BUTTON (Visible in Kiosk Mode) */}
+            <button 
+                onClick={handleExitFullScreen}
+                className="fixed top-0 right-0 z-[100] bg-black/30 hover:bg-red-600 text-white p-3 rounded-bl-xl transition-colors no-print"
+                title="Exit Full Screen"
+            >
+                <CloseIcon className="w-6 h-6" />
+            </button>
+
           <aside className="no-print w-64 bg-white shadow-lg fixed top-0 left-0 h-full overflow-y-auto hidden lg:block">
             <div className="p-6"><h1 className="text-2xl font-bold text-green-700 cursor-pointer select-none" onDoubleClick={handleNavigateToAdmin} title="雙擊進入管理後台">{t.title}</h1></div>
             <nav className="mt-4"><ul>{menuData.map((category) => (<li key={category.title}><a href={`#${category.title}`} className="block px-6 py-3 text-slate-600 font-semibold hover:bg-slate-100 hover:text-green-700 transition-colors">{category.title}</a></li>))}</ul></nav>
@@ -509,6 +531,7 @@ const App = () => {
           {!isQuietHours && (<div className="fixed bottom-6 right-6 z-30 no-print"><button onClick={() => setIsCartOpen(true)} className="bg-green-600 text-white rounded-full shadow-lg p-4 hover:bg-green-700 transition-transform transform hover:scale-110"><CartIcon className="h-8 w-8" />{totalCartItems > 0 && <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center">{totalCartItems}</span>}</button></div>)}
           {selectedItem && (<ItemModal selectedItem={selectedItem} editingItem={editingItem} addons={addons} options={options} onClose={handleCloseModal} onConfirmSelection={handleConfirmSelection} t={t} />)}
           <Cart isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} cartItems={cartItems} onUpdateQuantity={handleUpdateQuantity} onRemoveItem={handleRemoveItem} onEditItem={handleEditItem} onSubmitAndPrint={handleSubmitAndPrint} isSubmitting={isSubmitting} t={t} />
+          <OrderQueryModal isOpen={isQueryModalOpen} onClose={() => setIsQueryModalOpen(false)} t={t} />
         </div>
     );
 };
