@@ -299,6 +299,17 @@ const App = () => {
     const printContainerRef = useRef<HTMLElement | null>(null);
     const t = TRANSLATIONS[language];
 
+    // --- INITIAL CLEAN URL (REMOVE FBCLID) ---
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const url = new URL(window.location.href);
+            if (url.searchParams.has('fbclid')) {
+                url.searchParams.delete('fbclid');
+                window.history.replaceState({}, document.title, url.pathname + url.search);
+            }
+        }
+    }, []);
+
     // --- ANTI-COPY & KIOSK PROTECTION ---
     useEffect(() => {
         // 1. Disable Context Menu (Right Click)
@@ -318,19 +329,15 @@ const App = () => {
             e.stopPropagation();
         };
 
-        // 3. Disable Dragging
-        const handleDragStart = (e: DragEvent) => {
-            e.preventDefault();
-        };
+        // 3. REMOVED DRAG START BLOCKER (This was causing mobile scrolling issues)
+        // We rely on CSS "user-drag: none" instead.
 
         document.addEventListener('contextmenu', handleContextMenu);
         document.addEventListener('keydown', handleKeyDown);
-        document.addEventListener('dragstart', handleDragStart);
 
         return () => {
             document.removeEventListener('contextmenu', handleContextMenu);
             document.removeEventListener('keydown', handleKeyDown);
-            document.removeEventListener('dragstart', handleDragStart);
         };
     }, []);
 
@@ -570,7 +577,6 @@ const App = () => {
     
     const handleThankYouConfirm = () => {
         // Soft Reset to maintain Full Screen and URL parameters (Facebook Link Shim)
-        // Instead of hard window.location.reload(), we reset the React State.
         setCartItems([]);
         localStorage.removeItem('steakhouse_cart');
         setGuestCount(1);
@@ -634,7 +640,7 @@ const App = () => {
     if (showThankYou) return <ThankYouModal onConfirm={handleThankYouConfirm} />;
 
     return (
-        <div className="flex min-h-screen relative">
+        <div className="flex h-screen w-full overflow-hidden relative bg-slate-100">
             {/* EXIT FULL SCREEN BUTTON (Visible in Kiosk Mode) */}
             <button 
                 onClick={handleExitFullScreen}
@@ -644,22 +650,30 @@ const App = () => {
                 <CloseIcon className="w-6 h-6" />
             </button>
 
-          <aside className="no-print w-64 bg-white shadow-lg fixed top-0 left-0 h-full overflow-y-auto hidden lg:block">
+          <aside className="no-print w-64 bg-white shadow-lg fixed top-0 left-0 h-full overflow-y-auto hidden lg:block z-20">
             <div className="p-6"><h1 className="text-2xl font-bold text-green-700 cursor-pointer select-none" onDoubleClick={handleNavigateToAdmin} title="雙擊進入管理後台">{t.title}</h1></div>
             <nav className="mt-4"><ul>{menuData.map((category) => (<li key={category.title}><a href={`#${category.title}`} className="block px-6 py-3 text-slate-600 font-semibold hover:bg-slate-100 hover:text-green-700 transition-colors">{category.title}</a></li>))}</ul></nav>
           </aside>
-          <main className="lg:ml-64 flex-1">
-            <header className="no-print bg-white/80 backdrop-blur-sm p-4 shadow-md sticky top-0 z-20 flex justify-between items-center">
+          
+          <main className="flex-1 flex flex-col h-full relative lg:ml-64 overflow-hidden">
+            <header className="no-print bg-white/80 backdrop-blur-sm p-4 shadow-md z-20 flex justify-between items-center flex-shrink-0">
                 <div className="flex items-center gap-4"><h1 className="text-xl font-bold text-green-700 lg:hidden cursor-pointer select-none" onDoubleClick={handleNavigateToAdmin}>{t.title}</h1><button onClick={toggleLanguage} className="text-sm font-bold text-slate-600 border border-slate-300 rounded px-3 py-1 hover:bg-slate-100">{language === 'zh' ? 'English' : '中文'}</button></div>
                 <div className="flex items-center gap-3"><button onClick={() => window.location.reload()} className="flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors font-medium"><RefreshIcon className="h-5 w-5"/><span className="hidden sm:inline">{t.refresh}</span></button><button onClick={() => setIsQueryModalOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors font-medium"><SearchIcon /><span className="hidden sm:inline">{t.searchOrder}</span></button></div>
             </header>
+            
             {isQuietHours ? (
-              <div className="flex flex-col items-center justify-center h-[calc(100vh-80px)] text-center p-4"><h2 className="text-3xl font-bold text-slate-700 mb-4">{t.shopClosed}</h2><p className="text-slate-500">{t.shopClosedDesc}</p></div>
+              <div className="flex flex-col items-center justify-center h-full text-center p-4"><h2 className="text-3xl font-bold text-slate-700 mb-4">{t.shopClosed}</h2><p className="text-slate-500">{t.shopClosedDesc}</p></div>
             ) : isLoading ? (
-              <div className="flex items-center justify-center h-[calc(100vh-80px)]"><p className="text-slate-500">{t.loading}</p></div>
-            ) : (<div className="p-6 lg:p-10"><Menu menuData={menuData} onSelectItem={handleSelectItem} t={t} /></div>)}
+              <div className="flex items-center justify-center h-full"><p className="text-slate-500">{t.loading}</p></div>
+            ) : (
+              <div className="flex-1 overflow-y-auto scroll-smooth p-6 lg:p-10 pb-40">
+                  <Menu menuData={menuData} onSelectItem={handleSelectItem} t={t} />
+              </div>
+            )}
           </main>
+          
           {!isQuietHours && (<div className="fixed bottom-6 right-6 z-30 no-print"><button onClick={() => setIsCartOpen(true)} className="bg-green-600 text-white rounded-full shadow-lg p-4 hover:bg-green-700 transition-transform transform hover:scale-110"><CartIcon className="h-8 w-8" />{totalCartItems > 0 && <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center">{totalCartItems}</span>}</button></div>)}
+          
           {selectedItem && (<ItemModal selectedItem={selectedItem} editingItem={editingItem} addons={addons} options={options} onClose={handleCloseModal} onConfirmSelection={handleConfirmSelection} t={t} />)}
           <Cart isOpen={isCartOpen} onClose={handleCartClose} cartItems={cartItems} onUpdateQuantity={handleUpdateQuantity} onRemoveItem={handleRemoveItem} onEditItem={handleEditItem} onSubmitAndPrint={handleSubmitAndPrint} isSubmitting={isSubmitting} t={t} />
           <OrderQueryModal isOpen={isQueryModalOpen} onClose={() => setIsQueryModalOpen(false)} t={t} />
