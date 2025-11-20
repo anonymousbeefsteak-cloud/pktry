@@ -299,8 +299,14 @@ const App = () => {
     const printContainerRef = useRef<HTMLElement | null>(null);
     const t = TRANSLATIONS[language];
 
-    // --- ANTI-COPY & KIOSK PROTECTION ---
+    // --- ANTI-COPY & KIOSK PROTECTION & CLEAN URL ---
     useEffect(() => {
+        // 0. Clean URL (Remove fbclid and other query params) to look like a "fake" (clean) address
+        if (window.location.search.length > 0) {
+            const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+            window.history.replaceState({}, document.title, cleanUrl);
+        }
+
         // 1. Disable Context Menu (Right Click)
         const handleContextMenu = (e: MouseEvent) => {
             e.preventDefault();
