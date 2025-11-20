@@ -285,6 +285,32 @@ const App = () => {
         };
     }, []);
 
+    // --- EXIT LOGIC: ESC or Button ---
+    const handleClosePage = () => {
+        try { window.close(); } catch (e) {}
+        // Fallback for when window.close() is blocked by browser
+        window.location.href = "about:blank";
+    };
+
+    // Listen for Fullscreen Changes to handle ESC key
+    useEffect(() => {
+        const onFullScreenChange = () => {
+            const isFullScreen = document.fullscreenElement || (document as any).webkitFullscreenElement;
+            
+            // If full screen is exited AND we are inside the app (not on welcome screen), close/leave the page.
+            if (!isFullScreen && !showWelcome) {
+                handleClosePage();
+            }
+        };
+        
+        document.addEventListener('fullscreenchange', onFullScreenChange);
+        document.addEventListener('webkitfullscreenchange', onFullScreenChange);
+        return () => {
+            document.removeEventListener('fullscreenchange', onFullScreenChange);
+            document.removeEventListener('webkitfullscreenchange', onFullScreenChange);
+        };
+    }, [showWelcome]);
+
     useEffect(() => {
         printContainerRef.current = document.getElementById('print-container');
         
@@ -447,10 +473,17 @@ const App = () => {
     };
 
     const handleExitFullScreen = () => {
-        if (document.exitFullscreen) {
-            document.exitFullscreen().catch(err => console.log(err));
-        } else if ((document as any).webkitExitFullscreen) {
-            (document as any).webkitExitFullscreen();
+        // Explicit Close Button Action
+        if (document.fullscreenElement || (document as any).webkitFullscreenElement) {
+            if (document.exitFullscreen) {
+                // Trigger exit, the useEffect will catch the event and close the page
+                document.exitFullscreen().catch(() => handleClosePage());
+            } else if ((document as any).webkitExitFullscreen) {
+                (document as any).webkitExitFullscreen();
+            }
+        } else {
+            // Not in full screen, just close
+            handleClosePage();
         }
     };
     
@@ -508,7 +541,7 @@ const App = () => {
             <button 
                 onClick={handleExitFullScreen}
                 className="fixed top-0 right-0 z-[100] bg-black/30 hover:bg-red-600 text-white p-3 rounded-bl-xl transition-colors no-print"
-                title="Exit Full Screen"
+                title="Exit Full Screen / Close Page"
             >
                 <CloseIcon className="w-6 h-6" />
             </button>
