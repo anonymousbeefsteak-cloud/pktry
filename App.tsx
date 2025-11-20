@@ -226,6 +226,52 @@ const ThankYouModal = ({ onConfirm }: { onConfirm: () => void }) => {
     );
 };
 
+// --- Admin Login Modal to prevent native prompt breaking Fullscreen ---
+const AdminLoginModal = ({ isOpen, onClose, onLogin }: { isOpen: boolean; onClose: () => void; onLogin: () => void }) => {
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+    
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (password === "@Howardwang5172") {
+            onLogin();
+            setPassword('');
+            setError('');
+        } else {
+            setError('密碼錯誤');
+            setPassword('');
+        }
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-70 z-[70] flex justify-center items-center p-4" onClick={onClose}>
+            <div className="bg-white rounded-lg shadow-2xl w-full max-w-xs p-6" onClick={e => e.stopPropagation()}>
+                <h2 className="text-xl font-bold text-slate-800 mb-4">管理後台登入</h2>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                        <input 
+                            type="password" 
+                            value={password} 
+                            onChange={e => setPassword(e.target.value)}
+                            placeholder="請輸入管理員密碼"
+                            className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                            autoFocus
+                        />
+                        {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
+                    </div>
+                    <div className="flex gap-2">
+                        <button type="button" onClick={onClose} className="flex-1 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 font-medium">取消</button>
+                        <button type="submit" className="flex-1 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium">登入</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+};
+
+
 // --- Main App Component ---
 
 const App = () => {
@@ -245,7 +291,10 @@ const App = () => {
     const [guestCount, setGuestCount] = useState(1);
     const [isQuietHours, setIsQuietHours] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    
+    // Admin state
     const [isAdminOpen, setIsAdminOpen] = useState(false);
+    const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
     
     const printContainerRef = useRef<HTMLElement | null>(null);
     const t = TRANSLATIONS[language];
@@ -287,6 +336,9 @@ const App = () => {
 
     // --- EXIT LOGIC: ESC or Button ---
     const handleClosePage = () => {
+        // If we are in Admin or Login, do not close page
+        if (isAdminOpen || isAdminLoginOpen) return;
+
         try { window.close(); } catch (e) {}
         // Fallback for when window.close() is blocked by browser
         window.location.href = "about:blank";
@@ -298,7 +350,8 @@ const App = () => {
             const isFullScreen = document.fullscreenElement || (document as any).webkitFullscreenElement;
             
             // If full screen is exited AND we are inside the app (not on welcome screen), close/leave the page.
-            if (!isFullScreen && !showWelcome) {
+            // Added check: Don't close if admin login is open (though custom modal shouldn't trigger this)
+            if (!isFullScreen && !showWelcome && !isAdminLoginOpen && !isAdminOpen) {
                 handleClosePage();
             }
         };
@@ -309,7 +362,7 @@ const App = () => {
             document.removeEventListener('fullscreenchange', onFullScreenChange);
             document.removeEventListener('webkitfullscreenchange', onFullScreenChange);
         };
-    }, [showWelcome]);
+    }, [showWelcome, isAdminLoginOpen, isAdminOpen]);
 
     useEffect(() => {
         printContainerRef.current = document.getElementById('print-container');
@@ -519,10 +572,15 @@ const App = () => {
     };
 
     const handleNavigateToAdmin = () => { 
-        const password = prompt("請輸入管理員密碼以進入後台 (Enter Admin Password):", ""); 
-        if (password === "@Howardwang5172") setIsAdminOpen(true); 
-        else if (password !== null) alert("密碼錯誤"); 
+        // Use custom modal instead of window.prompt to prevent exiting full screen
+        setIsAdminLoginOpen(true);
     };
+    
+    const handleAdminLoginSuccess = () => {
+        setIsAdminLoginOpen(false);
+        setIsAdminOpen(true);
+    };
+    
     const toggleLanguage = () => { 
         setLanguage(prev => prev === 'zh' ? 'en' : 'zh'); 
         setCartItems([]); setIsCartOpen(false); 
@@ -565,6 +623,7 @@ const App = () => {
           {selectedItem && (<ItemModal selectedItem={selectedItem} editingItem={editingItem} addons={addons} options={options} onClose={handleCloseModal} onConfirmSelection={handleConfirmSelection} t={t} />)}
           <Cart isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} cartItems={cartItems} onUpdateQuantity={handleUpdateQuantity} onRemoveItem={handleRemoveItem} onEditItem={handleEditItem} onSubmitAndPrint={handleSubmitAndPrint} isSubmitting={isSubmitting} t={t} />
           <OrderQueryModal isOpen={isQueryModalOpen} onClose={() => setIsQueryModalOpen(false)} t={t} />
+          <AdminLoginModal isOpen={isAdminLoginOpen} onClose={() => setIsAdminLoginOpen(false)} onLogin={handleAdminLoginSuccess} />
         </div>
     );
 };
