@@ -344,14 +344,30 @@ const App = () => {
         window.location.href = "about:blank";
     };
 
+    // Helper to force FullScreen on Close Modal
+    const ensureFullScreen = () => {
+        const docEl = document.documentElement;
+        if (!document.fullscreenElement && !(document as any).webkitFullscreenElement) {
+            if (docEl.requestFullscreen) {
+                docEl.requestFullscreen().catch(() => {});
+            } else if ((docEl as any).webkitRequestFullscreen) {
+                (docEl as any).webkitRequestFullscreen();
+            }
+        }
+    };
+
     // Listen for Fullscreen Changes to handle ESC key
     useEffect(() => {
         const onFullScreenChange = () => {
             const isFullScreen = document.fullscreenElement || (document as any).webkitFullscreenElement;
             
             // If full screen is exited AND we are inside the app (not on welcome screen), close/leave the page.
-            // Added check: Don't close if admin login is open (though custom modal shouldn't trigger this)
-            if (!isFullScreen && !showWelcome && !isAdminLoginOpen && !isAdminOpen) {
+            // Added check: Don't close if:
+            // 1. Admin login is open
+            // 2. Admin panel is open
+            // 3. Item Modal is open (selectedItem !== null) - Allows ESC to close modal without killing app
+            // 4. Cart is open (isCartOpen)
+            if (!isFullScreen && !showWelcome && !isAdminLoginOpen && !isAdminOpen && !selectedItem && !isCartOpen) {
                 handleClosePage();
             }
         };
@@ -362,7 +378,7 @@ const App = () => {
             document.removeEventListener('fullscreenchange', onFullScreenChange);
             document.removeEventListener('webkitfullscreenchange', onFullScreenChange);
         };
-    }, [showWelcome, isAdminLoginOpen, isAdminOpen]);
+    }, [showWelcome, isAdminLoginOpen, isAdminOpen, selectedItem, isCartOpen]);
 
     useEffect(() => {
         printContainerRef.current = document.getElementById('print-container');
@@ -413,7 +429,12 @@ const App = () => {
             setIsCartOpen(false); 
         } 
     };
-    const handleCloseModal = () => { setSelectedItem(null); setEditingItem(null); };
+    const handleCloseModal = () => { 
+        setSelectedItem(null); 
+        setEditingItem(null); 
+        // When modal closes, force full screen again to maintain Kiosk mode
+        ensureFullScreen();
+    };
 
     const handleConfirmSelection = (item: MenuItem, quantity: number, selections: any, categoryTitle: string) => {
         const createCartKey = (itemData: MenuItem, selectionData: any) => [
