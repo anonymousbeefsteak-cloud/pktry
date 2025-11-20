@@ -126,160 +126,50 @@ const OrderQueryModal = ({ isOpen, onClose, t }: { isOpen: boolean; onClose: () 
 };
 
 const WelcomeModal = ({ onAgree, t }: { onAgree: () => void; t: any }) => {
-    const [currentSlide, setCurrentSlide] = useState(0);
-
-    const slides = [
-        {
-            type: 'intro',
-            title: "今日菜單懶人包",
-            subtitle: "點餐模擬頁面",
-            image: "https://anonymousbeefsteak-cloud.github.io/pktry/5.jpg",
-            bgColor: "bg-slate-900",
-            textColor: "text-white"
-        },
-        {
-            type: 'feature',
-            title: "人氣推薦 (Popular)",
-            items: [
-                { name: "板腱牛排 (Top Blade)", desc: "鮮嫩多汁，口感豐富" },
-                { name: "上蓋牛排 (Ribeye Cap)", desc: "油花均勻，入口即化" }
-            ],
-            bgColor: "bg-green-800",
-            textColor: "text-white"
-        },
-        {
-            type: 'guide',
-            title: "點餐懶人包 (Guide)",
-            steps: [
-                "1. 選擇主餐 (Choose Meal)",
-                "2. 選擇熟度與醬料 (Doneness & Sauce)",
-                "3. 升級套餐更划算 (Upgrade to Set)"
-            ],
-            bgColor: "bg-orange-700",
-            textColor: "text-white"
-        },
-        {
-            type: 'rules',
-            title: t.welcomeTitle,
-            content: t.welcomeContent,
-            bgColor: "bg-white",
-            textColor: "text-slate-800"
-        }
-    ];
-
-    useEffect(() => {
-        const timer = setInterval(() => {
-            // Don't auto advance on the last slide (rules)
-            if (currentSlide < slides.length - 1) {
-                setCurrentSlide(prev => prev + 1);
-            }
-        }, 5000);
-        return () => clearInterval(timer);
-    }, [currentSlide, slides.length]);
-
-    const nextSlide = () => setCurrentSlide(prev => Math.min(prev + 1, slides.length - 1));
-    const prevSlide = () => setCurrentSlide(prev => Math.max(0, prev - 1));
+    const brandingImage = "https://anonymousbeefsteak-cloud.github.io/pktry/5.jpg";
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex justify-center items-center p-4">
-            <div className="relative w-full max-w-2xl h-[500px] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col">
-                {/* Carousel Content */}
-                <div className="flex-1 relative overflow-hidden">
-                    <div 
-                        className="absolute inset-0 flex transition-transform duration-500 ease-in-out h-full"
-                        style={{ transform: `translateX(-${currentSlide * 100}%)` }}
-                    >
-                        {slides.map((slide, index) => (
-                            <div key={index} className={`w-full h-full flex-shrink-0 flex flex-col justify-center items-center p-0 text-center relative ${slide.bgColor} ${slide.textColor}`}>
-                                {slide.type === 'intro' && (
-                                    <div className="relative w-full h-full">
-                                        <img 
-                                            src={slide.image} 
-                                            alt="Today's Menu Lazy Package" 
-                                            className="w-full h-full object-cover"
-                                        />
-                                        <div className="absolute inset-0 bg-black bg-opacity-30 flex flex-col justify-center items-center p-8">
-                                             {/* Overlay text for accessibility or design emphasis, though image has text */}
-                                             <h2 className="text-3xl font-extrabold mb-2 tracking-tight text-white drop-shadow-md">{slide.title}</h2>
-                                             <p className="text-lg text-white drop-shadow-md opacity-90">{slide.subtitle}</p>
-                                             <p className="mt-auto mb-4 text-sm text-white opacity-80 bg-black/50 px-3 py-1 rounded-full">點擊右下角 Next 開始模擬</p>
-                                        </div>
-                                    </div>
-                                )}
-                                {slide.type === 'feature' && (
-                                    <div className="p-8 w-full h-full flex flex-col justify-center items-center">
-                                        <h2 className="text-3xl font-bold mb-8">{slide.title}</h2>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
-                                            {slide.items?.map((item, idx) => (
-                                                <div key={idx} className="bg-white/10 backdrop-blur-md p-6 rounded-xl border border-white/20">
-                                                    <div className="text-xl font-bold mb-2">{item.name}</div>
-                                                    <div className="text-sm opacity-80">{item.desc}</div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-                                {slide.type === 'guide' && (
-                                    <div className="p-8 w-full h-full flex flex-col justify-center items-center">
-                                        <h2 className="text-3xl font-bold mb-8">{slide.title}</h2>
-                                        <div className="space-y-4 text-left w-full max-w-md">
-                                            {slide.steps?.map((step, idx) => (
-                                                <div key={idx} className="flex items-center gap-4 bg-white/10 p-4 rounded-lg">
-                                                    <span className="flex-shrink-0 w-8 h-8 bg-white text-orange-700 rounded-full flex items-center justify-center font-bold">{idx + 1}</span>
-                                                    <span className="text-lg font-medium">{step.slice(2)}</span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-                                {slide.type === 'rules' && (
-                                    <div className="p-8 w-full h-full flex flex-col justify-center items-center">
-                                        <h2 className="text-3xl font-bold mb-6 text-slate-800 border-b-4 border-green-500 pb-2">{slide.title}</h2>
-                                        <div className="text-slate-600 space-y-4 text-left text-lg mb-8 bg-slate-50 p-6 rounded-xl w-full">
-                                            {slide.content?.map((line: string, idx: number) => (
-                                                <p key={idx} className="flex items-start gap-2">
-                                                    <span className="text-green-500 mt-1">✓</span>
-                                                    {line.replace(/^＊/, '')}
-                                                </p>
-                                            ))}
-                                        </div>
-                                        <button onClick={onAgree} className="w-full bg-green-600 text-white font-bold py-4 px-8 rounded-xl hover:bg-green-700 transition-all shadow-lg transform hover:scale-105 text-xl">
-                                            {t.welcomeAgree}
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                        ))}
+            <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                {/* Branding Header */}
+                <div className="relative h-48 w-full flex-shrink-0">
+                    <img 
+                        src={brandingImage} 
+                        alt="Today's Menu Lazy Package" 
+                        className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-4">
+                         <h2 className="text-2xl font-extrabold text-white drop-shadow-md">今日菜單懶人包</h2>
+                         <p className="text-sm text-gray-200 drop-shadow-md opacity-90">點餐模擬頁面</p>
                     </div>
                 </div>
 
-                {/* Controls */}
-                <div className="h-16 bg-white border-t flex items-center justify-between px-6 z-10">
-                    <div className="flex gap-2">
-                        {slides.map((_, idx) => (
-                            <button 
-                                key={idx} 
-                                onClick={() => setCurrentSlide(idx)}
-                                className={`w-2.5 h-2.5 rounded-full transition-colors ${currentSlide === idx ? 'bg-slate-800' : 'bg-slate-300'}`}
-                            />
-                        ))}
+                {/* Content & Rules */}
+                <div className="flex-1 overflow-y-auto p-6">
+                    <div className="mb-6">
+                         <h3 className="text-lg font-bold text-slate-800 border-b-2 border-green-500 pb-2 mb-3">{t.welcomeTitle}</h3>
+                         <div className="space-y-3 text-slate-600 text-sm leading-relaxed">
+                            {t.welcomeContent?.map((line: string, idx: number) => (
+                                <p key={idx} className="flex items-start gap-2">
+                                    <span className="text-green-500 font-bold mt-0.5">✓</span>
+                                    <span>{line.replace(/^＊/, '')}</span>
+                                </p>
+                            ))}
+                         </div>
                     </div>
-                    <div className="flex gap-4">
-                        <button 
-                            onClick={prevSlide} 
-                            disabled={currentSlide === 0}
-                            className="text-slate-400 hover:text-slate-800 disabled:opacity-30 font-bold"
-                        >
-                            PREV
-                        </button>
-                        <button 
-                            onClick={nextSlide} 
-                            disabled={currentSlide === slides.length - 1}
-                            className="text-slate-800 hover:text-green-600 disabled:opacity-30 font-bold"
-                        >
-                            NEXT
-                        </button>
+
+                    {/* Simulation Notice */}
+                    <div className="bg-slate-100 p-4 rounded-lg border border-slate-200 text-xs text-slate-500 mb-2">
+                        <p className="font-bold mb-1 text-slate-700">💡 模擬點餐說明：</p>
+                        <p>本頁面為線上模擬系統，僅供試算價格與預覽菜單。請於現場將最終畫面出示給服務人員。</p>
                     </div>
+                </div>
+
+                {/* Footer Action */}
+                <div className="p-4 border-t bg-slate-50">
+                    <button onClick={onAgree} className="w-full bg-green-600 text-white font-bold py-3 px-6 rounded-xl hover:bg-green-700 transition-all shadow-lg transform active:scale-95 text-lg">
+                        {t.welcomeAgree}
+                    </button>
                 </div>
             </div>
         </div>
