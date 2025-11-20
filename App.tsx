@@ -296,6 +296,19 @@ const GuestCountModal = ({ onConfirm, t }: { onConfirm: (count: number) => void;
 };
 
 const ThankYouModal = ({ onConfirm }: { onConfirm: () => void }) => {
+    const [timeLeft, setTimeLeft] = useState(5);
+
+    useEffect(() => {
+        if (timeLeft === 0) {
+            onConfirm();
+            return;
+        }
+        const intervalId = setInterval(() => {
+            setTimeLeft(prev => prev - 1);
+        }, 1000);
+        return () => clearInterval(intervalId);
+    }, [timeLeft, onConfirm]);
+
     return (
         <div className="fixed inset-0 bg-black bg-opacity-80 z-[60] flex justify-center items-center p-4">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 text-center transform transition-all scale-100 animate-bounce-in">
@@ -310,13 +323,13 @@ const ThankYouModal = ({ onConfirm }: { onConfirm: () => void }) => {
                 <h3 className="text-lg font-medium text-slate-500 mb-6">Thank you for trying</h3>
                 <p className="text-slate-600 mb-8">
                     模擬點餐程序已完成。<br/>
-                    請點擊下方按鈕重新載入頁面。
+                    將在 <span className="font-bold text-green-600 text-xl">{timeLeft}</span> 秒後自動重新載入...
                 </p>
                 <button 
                     onClick={onConfirm}
                     className="w-full bg-slate-800 text-white font-bold py-3 px-6 rounded-xl hover:bg-slate-900 transition-colors shadow-md"
                 >
-                    重新載入 (Reload)
+                    立即重新載入 (Reload Now)
                 </button>
             </div>
         </div>
@@ -342,7 +355,6 @@ const App = () => {
     const [guestCount, setGuestCount] = useState(1);
     const [isQuietHours, setIsQuietHours] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
-    const [orderToPrint, setOrderToPrint] = useState<Order | null>(null);
     const [isAdminOpen, setIsAdminOpen] = useState(false);
     
     const printContainerRef = useRef<HTMLElement | null>(null);
@@ -551,9 +563,15 @@ const App = () => {
         if (isSubmitting) return; setIsSubmitting(true);
         try {
             const finalOrderData = { ...orderData, guestCount };
+            // Simulate submission
             const result = await apiService.submitOrder(finalOrderData);
             if (result.success && result.order) { 
-                setOrderToPrint(result.order); 
+                // SKIP PRINTING logic, go straight to cleanup
+                setCartItems([]); 
+                localStorage.removeItem('steakhouse_cart'); 
+                setIsCartOpen(false); 
+                setIsSubmitting(false); 
+                setShowThankYou(true);
             } else { 
                 alert((!result.success && result.message) || 'Order failed.'); 
                 setIsSubmitting(false); 
@@ -573,25 +591,6 @@ const App = () => {
         setLanguage(prev => prev === 'zh' ? 'en' : 'zh'); 
         setCartItems([]); setIsCartOpen(false); 
     };
-
-    useEffect(() => {
-        if (orderToPrint) {
-          const handleAfterPrint = () => { 
-              setOrderToPrint(null); 
-              // STRICT CLEARING LOGIC HERE
-              setCartItems([]); 
-              localStorage.removeItem('steakhouse_cart'); // Explicit delete
-              setIsCartOpen(false); 
-              setIsSubmitting(false); 
-              // Show Thank You Modal instead of immediate reset
-              setShowThankYou(true);
-              window.removeEventListener('afterprint', handleAfterPrint); 
-          };
-          window.addEventListener('afterprint', handleAfterPrint);
-          const timer = setTimeout(() => window.print(), 150);
-          return () => { clearTimeout(timer); window.removeEventListener('afterprint', handleAfterPrint); };
-        }
-    }, [orderToPrint]);
     
     const totalCartItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -620,7 +619,6 @@ const App = () => {
           {!isQuietHours && (<div className="fixed bottom-6 right-6 z-30 no-print"><button onClick={() => setIsCartOpen(true)} className="bg-green-600 text-white rounded-full shadow-lg p-4 hover:bg-green-700 transition-transform transform hover:scale-110"><CartIcon className="h-8 w-8" />{totalCartItems > 0 && <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center">{totalCartItems}</span>}</button></div>)}
           {selectedItem && (<ItemModal selectedItem={selectedItem} editingItem={editingItem} addons={addons} options={options} onClose={handleCloseModal} onConfirmSelection={handleConfirmSelection} t={t} />)}
           <Cart isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} cartItems={cartItems} onUpdateQuantity={handleUpdateQuantity} onRemoveItem={handleRemoveItem} onEditItem={handleEditItem} onSubmitAndPrint={handleSubmitAndPrint} isSubmitting={isSubmitting} t={t} />
-          {orderToPrint && printContainerRef.current && createPortal(<PrintableOrder order={orderToPrint} />, printContainerRef.current)}
         </div>
     );
 };
