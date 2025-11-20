@@ -1,12 +1,10 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { createPortal } from 'react-dom';
 import { apiService } from './services/apiService';
 import { Menu } from './components/Menu';
 import { Cart } from './components/Cart';
 import { ItemModal } from './components/ItemModal';
 import { AdminPanel } from './components/AdminPanel';
-import { PrintableOrder } from './components/PrintableOrder';
 import { RefreshIcon, SearchIcon, CartIcon, CloseIcon, MinusIcon, PlusIcon } from './components/Icons';
 import { TRANSLATIONS } from './constants';
 import { MenuItem, MenuCategory, Addon, OptionsData, CartItem, Order, SearchOrderParams, OrderSummary } from './types';
@@ -640,7 +638,7 @@ const App = () => {
     if (showThankYou) return <ThankYouModal onConfirm={handleThankYouConfirm} />;
 
     return (
-        <div className="flex h-screen w-full overflow-hidden relative bg-slate-100">
+        <div className="fixed inset-0 w-full h-full overflow-hidden relative bg-slate-100">
             {/* EXIT FULL SCREEN BUTTON (Visible in Kiosk Mode) */}
             <button 
                 onClick={handleExitFullScreen}
