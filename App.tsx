@@ -436,6 +436,11 @@ const App = () => {
         ensureFullScreen();
     };
 
+    const handleCartClose = () => {
+        setIsCartOpen(false);
+        ensureFullScreen();
+    };
+
     const handleConfirmSelection = (item: MenuItem, quantity: number, selections: any, categoryTitle: string) => {
         const createCartKey = (itemData: MenuItem, selectionData: any) => [
             itemData.id, 
@@ -564,9 +569,23 @@ const App = () => {
     const handleGuestCountConfirm = (count: number) => { setGuestCount(count); setShowGuestCountModal(false); };
     
     const handleThankYouConfirm = () => {
+        // Soft Reset to maintain Full Screen and URL parameters (Facebook Link Shim)
+        // Instead of hard window.location.reload(), we reset the React State.
+        setCartItems([]);
+        localStorage.removeItem('steakhouse_cart');
+        setGuestCount(1);
+        setLanguage('zh');
+        setIsCartOpen(false);
+        setSelectedItem(null);
+        setEditingItem(null);
+        setIsQueryModalOpen(false);
+        setIsSubmitting(false);
+        
         setShowThankYou(false);
-        // Hard reload as requested to ensure complete privacy/reset
-        window.location.reload();
+        setShowWelcome(true); // Back to Start
+        
+        // Ensure Full Screen is active
+        ensureFullScreen();
     };
 
     const handleSubmitAndPrint = async (orderData: Partial<Order>) => {
@@ -642,7 +661,7 @@ const App = () => {
           </main>
           {!isQuietHours && (<div className="fixed bottom-6 right-6 z-30 no-print"><button onClick={() => setIsCartOpen(true)} className="bg-green-600 text-white rounded-full shadow-lg p-4 hover:bg-green-700 transition-transform transform hover:scale-110"><CartIcon className="h-8 w-8" />{totalCartItems > 0 && <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center">{totalCartItems}</span>}</button></div>)}
           {selectedItem && (<ItemModal selectedItem={selectedItem} editingItem={editingItem} addons={addons} options={options} onClose={handleCloseModal} onConfirmSelection={handleConfirmSelection} t={t} />)}
-          <Cart isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} cartItems={cartItems} onUpdateQuantity={handleUpdateQuantity} onRemoveItem={handleRemoveItem} onEditItem={handleEditItem} onSubmitAndPrint={handleSubmitAndPrint} isSubmitting={isSubmitting} t={t} />
+          <Cart isOpen={isCartOpen} onClose={handleCartClose} cartItems={cartItems} onUpdateQuantity={handleUpdateQuantity} onRemoveItem={handleRemoveItem} onEditItem={handleEditItem} onSubmitAndPrint={handleSubmitAndPrint} isSubmitting={isSubmitting} t={t} />
           <OrderQueryModal isOpen={isQueryModalOpen} onClose={() => setIsQueryModalOpen(false)} t={t} />
           <AdminLoginModal isOpen={isAdminLoginOpen} onClose={() => setIsAdminLoginOpen(false)} onLogin={handleAdminLoginSuccess} />
         </div>
